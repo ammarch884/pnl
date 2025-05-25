@@ -1,1 +1,116 @@
-<h1>Hello</h1>
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profit & Loss Calculator - Urdu AI</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 p-4">
+  <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-6">
+    <h1 class="text-3xl text-center font-bold mb-4">Profit & Loss Calculator</h1>
+    <form id="profitForm" class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <label class="block"><span class="text-sm font-medium">Product Cost</span><input type="number" id="productCost" class="border p-2 rounded w-full mt-1"></label>
+        <label class="block"><span class="text-sm font-medium">Packing Cost</span><input type="number" id="packingCost" class="border p-2 rounded w-full mt-1"></label>
+        <label class="block"><span class="text-sm font-medium">Ad Cost per Order</span><input type="number" id="adCost" class="border p-2 rounded w-full mt-1"></label>
+        <label class="block"><span class="text-sm font-medium">Delivered Cost (250)</span><input type="number" id="deliveredCost" class="border p-2 rounded w-full mt-1"></label>
+        <label class="block"><span class="text-sm font-medium">Returned Cost (430)</span><input type="number" id="returnedCost" class="border p-2 rounded w-full mt-1"></label>
+        <label class="block"><span class="text-sm font-medium">Confirmation %</span><input type="number" id="confirmationRate" class="border p-2 rounded w-full mt-1"></label>
+        <label class="block"><span class="text-sm font-medium">Delivery %</span><input type="number" id="deliveryRate" class="border p-2 rounded w-full mt-1"></label>
+        <label class="block"><span class="text-sm font-medium">Selling Price</span><input type="number" id="sellingPrice" class="border p-2 rounded w-full mt-1"></label>
+        <label class="block"><span class="text-sm font-medium">Total Orders</span><input type="number" id="totalOrders" class="border p-2 rounded w-full mt-1"></label>
+      </div>
+      <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Calculate</button>
+    </form>
+    <div id="result" class="mt-6 hidden">
+      <h2 class="text-2xl font-semibold mb-4">Results</h2>
+      <div class="grid grid-cols-2 gap-4" id="output"></div>
+      <div class="flex space-x-4 mt-4">
+        <button onclick="downloadPDF()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Download PDF</button>
+        <a id="whatsappBtn" target="_blank" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Send on WhatsApp</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const elements = document.querySelectorAll('#output > div');
+      let y = 10;
+
+      doc.setFontSize(16);
+      doc.text("Profit & Loss Report", 10, y);
+      y += 10;
+
+      doc.setFontSize(12);
+      elements.forEach(el => {
+        doc.text(el.textContent.trim(), 10, y);
+        y += 8;
+      });
+
+      doc.save('profit-loss-report.pdf');
+
+      let message = "Profit & Loss Report\n";
+      elements.forEach(el => {
+        message += el.textContent.trim() + "\n";
+      });
+
+      const whatsappMessage = encodeURIComponent(message);
+      document.getElementById('whatsappBtn').href = `https://wa.me/?text=${whatsappMessage}`;
+    }
+
+    document.getElementById('profitForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const productCost = parseFloat(document.getElementById('productCost').value) || 0;
+      const packingCost = parseFloat(document.getElementById('packingCost').value) || 0;
+      const adCost = parseFloat(document.getElementById('adCost').value) || 0;
+      const deliveredCost = parseFloat(document.getElementById('deliveredCost').value) || 250;
+      const returnedCost = parseFloat(document.getElementById('returnedCost').value) || 430;
+      const confirmationRate = (parseFloat(document.getElementById('confirmationRate').value) || 0) / 100;
+      const deliveryRate = (parseFloat(document.getElementById('deliveryRate').value) || 0) / 100;
+      const sellingPrice = parseFloat(document.getElementById('sellingPrice').value) || 0;
+      const totalOrders = parseInt(document.getElementById('totalOrders').value) || 0;
+
+      const confirmedOrders = totalOrders * confirmationRate;
+      const deliveredOrders = confirmedOrders * deliveryRate;
+      const returnedOrders = confirmedOrders - deliveredOrders;
+
+      const totalRevenue = deliveredOrders * sellingPrice;
+      const totalCOGS = deliveredOrders * (productCost + packingCost);
+      const totalAdCost = totalOrders * adCost;
+      const totalDeliveryCost = (deliveredOrders * deliveredCost) + (returnedOrders * returnedCost);
+
+      const totalInvestment = totalCOGS + totalAdCost;
+      const netProfit = totalRevenue - (totalCOGS + totalAdCost + totalDeliveryCost);
+
+      const resultHTML = `
+        <div class="bg-blue-100 p-4 rounded">Units Confirmed: ${confirmedOrders.toFixed(0)}</div>
+        <div class="bg-blue-100 p-4 rounded">Units Delivered: ${deliveredOrders.toFixed(0)}</div>
+        <div class="bg-blue-100 p-4 rounded">Units Returned: ${returnedOrders.toFixed(0)}</div>
+        <div class="bg-green-100 p-4 rounded">Total Revenue: ${totalRevenue.toFixed(2)} PKR</div>
+        <div class="bg-yellow-100 p-4 rounded">COGS (Cost of Goods Sold): ${totalCOGS.toFixed(2)} PKR</div>
+        <div class="bg-yellow-100 p-4 rounded">Ad Cost: ${totalAdCost.toFixed(2)} PKR</div>
+        <div class="bg-yellow-100 p-4 rounded">Delivery Charges: ${totalDeliveryCost.toFixed(2)} PKR</div>
+        <div class="bg-blue-200 p-4 rounded font-semibold">Total Investment (COGS + Ad): ${totalInvestment.toFixed(2)} PKR</div>
+        <div class="${netProfit >= 0 ? 'bg-green-200' : 'bg-red-200'} p-4 rounded">Net ${netProfit >= 0 ? 'Profit' : 'Loss'}: ${netProfit.toFixed(2)} PKR</div>
+      `;
+
+      document.getElementById('output').innerHTML = resultHTML;
+      document.getElementById('result').classList.remove('hidden');
+    });
+  </script>
+</body>
+
+</html>
